@@ -18,11 +18,11 @@
                 <form>
                     <div class="mb-3">
                         <label for="startDate" class="form-label">Data Inicial:</label>
-                        <input type="date" id="startDate" class="form-control">
+                        <input type="text" id="startDate" class="form-control" placeholder="dd/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" title="Digite a data no formato dd/mm/aaaa">
                     </div>
                     <div class="mb-3">
                         <label for="endDate" class="form-label">Data Final:</label>
-                        <input type="date" id="endDate" class="form-control">
+                        <input type="text" id="endDate" class="form-control" placeholder="dd/mm/aaaa" pattern="\d{2}/\d{2}/\d{4}" title="Digite a data no formato dd/mm/aaaa">
                     </div>
                     <button type="button" class="btn btn-primary w-100" onclick="calculateDays()">Calcular Dias</button>
                 </form>
@@ -40,39 +40,57 @@
             return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0));
         }
 
+        // Função para converter uma data no formato dd/mm/aaaa para um objeto Date
+        function parseDate(dateString) {
+            const parts = dateString.split('/');
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+
         // Função para calcular os dias entre duas datas
         function calculateDays() {
-            const startDate = new Date(document.getElementById("startDate").value);
-            const endDate = new Date(document.getElementById("endDate").value);
+            const startDateString = document.getElementById("startDate").value;
+            const endDateString = document.getElementById("endDate").value;
             const resultElement = document.getElementById("result");
 
-            if (isNaN(startDate) || isNaN(endDate)) {
-                resultElement.innerHTML = "<div class='alert alert-danger'>Por favor, insira datas válidas.</div>";
+            if (!startDateString || !endDateString) {
+                resultElement.innerHTML = "<div class='alert alert-danger'>Por favor, insira datas válidas no formato dd/mm/aaaa.</div>";
                 return;
             }
 
-            if (startDate > endDate) {
-                resultElement.innerHTML = "<div class='alert alert-warning'>A data inicial deve ser anterior à data final.</div>";
-                return;
+            try {
+                const startDate = parseDate(startDateString);
+                const endDate = parseDate(endDateString);
+
+                if (isNaN(startDate) || isNaN(endDate)) {
+                    resultElement.innerHTML = "<div class='alert alert-danger'>Por favor, insira datas válidas no formato dd/mm/aaaa.</div>";
+                    return;
+                }
+
+                if (startDate > endDate) {
+                    resultElement.innerHTML = "<div class='alert alert-warning'>A data inicial deve ser anterior à data final.</div>";
+                    return;
+                }
+
+                let totalDays = 0;
+                let currentYear = startDate.getFullYear();
+                const endYear = endDate.getFullYear();
+
+                // Calcular os dias ano a ano
+                while (currentYear <= endYear) {
+                    const yearStart = currentYear === startDate.getFullYear() ? startDate : new Date(currentYear, 0, 1);
+                    const yearEnd = currentYear === endYear ? endDate : new Date(currentYear, 11, 31);
+                    const daysInYear = isLeapYear(currentYear) ? 366 : 365;
+
+                    const yearDays = (yearEnd - yearStart) / (1000 * 60 * 60 * 24) + 1;
+                    totalDays += yearDays;
+
+                    currentYear++;
+                }
+
+                resultElement.innerHTML = `<div class='alert alert-success'>O total de dias entre as datas é: ${Math.round(totalDays)} dias.</div>`;
+            } catch (error) {
+                resultElement.innerHTML = "<div class='alert alert-danger'>Ocorreu um erro ao processar as datas. Verifique o formato inserido.</div>";
             }
-
-            let totalDays = 0;
-            let currentYear = startDate.getFullYear();
-            const endYear = endDate.getFullYear();
-
-            // Calcular os dias ano a ano
-            while (currentYear <= endYear) {
-                const yearStart = currentYear === startDate.getFullYear() ? startDate : new Date(currentYear, 0, 1);
-                const yearEnd = currentYear === endYear ? endDate : new Date(currentYear, 11, 31);
-                const daysInYear = isLeapYear(currentYear) ? 366 : 365;
-
-                const yearDays = (yearEnd - yearStart) / (1000 * 60 * 60 * 24) + 1;
-                totalDays += yearDays;
-
-                currentYear++;
-            }
-
-            resultElement.innerHTML = `<div class='alert alert-success'>O total de dias entre as datas é: ${Math.round(totalDays)} dias.</div>`;
         }
     </script>
 </body>
